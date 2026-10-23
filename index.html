@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Workout Diary</title>
+  <meta name="description" content="A simple offline workout and weight diary.">
+  <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Workouts">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 id="view-title">Today</h1>
+    <button id="theme-toggle" class="icon-btn" type="button" aria-label="Switch theme" title="Switch theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>
+    </button>
+  </header>
+
+  <main id="main">
+    <!-- TODAY -->
+    <section id="view-today" class="view" data-title="Today">
+      <p id="today-date" class="muted lead"></p>
+
+      <div class="stats-row">
+        <div class="card stat">
+          <span class="stat-label">Streak</span>
+          <span class="stat-value"><span id="streak-count">0</span> <small id="streak-unit">days</small></span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Today</span>
+          <span class="stat-value"><span id="today-progress">0/0</span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Today's workouts</h2>
+        <ul id="today-list" class="workout-list"></ul>
+        <div id="today-empty" class="empty" hidden>
+          <p>Rest day 🎉 Nothing is planned for today.</p>
+          <a class="btn secondary" href="#plan">Open weekly plan</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>This week</h2>
+        <p id="week-summary-text" class="muted"></p>
+        <div id="week-bars" class="week-bars"></div>
+      </div>
+    </section>
+
+    <!-- PLAN -->
+    <section id="view-plan" class="view" data-title="Weekly plan" hidden>
+      <div class="card">
+        <h2>Suggest my week</h2>
+        <p class="muted">Builds a beginner plan from your profile: 3–4 sessions of 20–40 minutes, alternating cardio and strength. This replaces your current plan.</p>
+        <label class="field inline">
+          <span>Preferred time</span>
+          <input id="suggest-time" type="time" value="18:00">
+        </label>
+        <button id="suggest-btn" class="btn primary block" type="button">✨ Suggest my week</button>
+      </div>
+
+
+      <div id="plan-days" class="view"></div>
+      <div class="card">
+        <h2>Add to calendar</h2>
+        <p class="muted">Exports your plan as weekly repeating calendar events with alerts, so iPhone reminds you.</p>
+        <label class="field inline">
+          <span>Alert</span>
+          <select id="alert-select">
+            <option value="0">At workout time</option>
+            <option value="10">10 min before</option>
+            <option value="30">30 min before</option>
+            <option value="60">1 hour before</option>
+          </select>
+        </label>
+        <button id="ics-btn" class="btn primary block" type="button">📅 Add to calendar</button>
+        <button id="ics-download-btn" class="btn ghost block" type="button">Download .ics file instead</button>
+      </div>
+    </section>
+
+    <!-- WEIGHT -->
+    <section id="view-weight" class="view" data-title="Weight" hidden>
+      <button id="log-weight-btn" class="btn primary block big" type="button">⚖️ Log today's weight</button>
+
+      <div class="card">
+        <h2>Progress</h2>
+        <div id="weight-chart" class="chart" role="img" aria-label="Weight over time"></div>
+      </div>
+
+      <div class="card">
+        <h2>History</h2>
+        <ul id="weight-list" class="plain-list"></ul>
+        <p id="weight-empty" class="muted" hidden>No entries yet. Tap “Log today's weight” to start.</p>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="view-profile" class="view" data-title="Profile" hidden>
+      <div class="card">
+        <h2>Your profile</h2>
+        <form id="profile-form" class="form-grid" autocomplete="off">
+          <label class="field">
+            <span>Height (cm)</span>
+            <input name="height" type="number" inputmode="decimal" min="100" max="250" step="0.5" placeholder="e.g. 170">
+          </label>
+          <label class="field">
+            <span>Current weight (kg)</span>
+            <input name="weight" type="number" inputmode="decimal" min="25" max="350" step="0.1" placeholder="e.g. 70">
+          </label>
+          <label class="field">
+            <span>Goal weight (kg)</span>
+            <input name="goal" type="number" inputmode="decimal" min="25" max="350" step="0.1" placeholder="e.g. 65">
+          </label>
+        </form>
+      </div>
+
+      <div class="stats-row">
+        <div class="card stat">
+          <span class="stat-label">BMI</span>
+          <span class="stat-value" id="bmi-value">–</span>
+          <span class="stat-sub" id="bmi-category"></span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">To goal</span>
+          <span class="stat-value" id="goal-diff">–</span>
+          <span class="stat-sub" id="goal-sub"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Appearance</h2>
+        <div class="segmented" id="theme-seg" role="radiogroup" aria-label="Theme">
+          <button type="button" data-theme-value="system" role="radio">System</button>
+          <button type="button" data-theme-value="light" role="radio">Light</button>
+          <button type="button" data-theme-value="dark" role="radio">Dark</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Your data</h2>
+        <p class="muted">Everything is stored only on this device. Export a backup now and then.</p>
+        <button id="export-btn" class="btn secondary block" type="button">Export data (JSON)</button>
+        <label class="btn secondary block file-btn">
+          Import data (JSON)
+          <input id="import-input" type="file" accept="application/json,.json">
+        </label>
+        <button id="demo-btn" class="btn ghost block" type="button">Load demo data</button>
+        <button id="reset-btn" class="btn danger block" type="button">Delete all data</button>
+      </div>
+
+      <p class="muted center small">Workout Diary · works offline · no account, no tracking</p>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Main">
+    <a href="#today" data-view="today">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>
+      <span>Today</span>
+    </a>
+    <a href="#plan" data-view="plan">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <span>Plan</span>
+    </a>
+    <a href="#weight" data-view="weight">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+      <span>Weight</span>
+    </a>
+    <a href="#profile" data-view="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <!-- Workout editor -->
+  <dialog id="workout-dialog">
+    <form id="workout-form" method="dialog">
+      <h2 id="workout-dialog-title">Add workout</h2>
+      <label class="field">
+        <span>Exercise</span>
+        <select name="preset" id="preset-select"></select>
+      </label>
+      <label class="field">
+        <span>Name</span>
+        <input name="name" type="text" maxlength="60" required placeholder="e.g. Jumping jacks">
+      </label>
+      <div class="field">
+        <span>Type</span>
+        <div class="segmented" id="type-seg">
+          <button type="button" data-value="strength">Strength</button>
+          <button type="button" data-value="cardio">Cardio</button>
+          <button type="button" data-value="mobility">Mobility</button>
+        </div>
+      </div>
+      <div class="field">
+        <span>Measure by</span>
+        <div class="segmented" id="mode-seg">
+          <button type="button" data-value="reps">Sets × reps</button>
+          <button type="button" data-value="time">Duration</button>
+        </div>
+      </div>
+      <div class="row">
+        <label class="field">
+          <span>Sets</span>
+          <input name="sets" type="number" inputmode="numeric" min="1" max="20" value="3">
+        </label>
+        <label class="field" data-mode="reps">
+          <span>Reps</span>
+          <input name="reps" type="number" inputmode="numeric" min="1" max="200" value="10">
+        </label>
+        <label class="field" data-mode="time">
+          <span>Each</span>
+          <input name="amount" type="number" inputmode="numeric" min="1" max="600" value="30">
+        </label>
+        <label class="field" data-mode="time">
+          <span>Unit</span>
+          <select name="unit">
+            <option value="s">sec</option>
+            <option value="min">min</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label class="field">
+          <span>Total minutes</span>
+          <input name="minutes" type="number" inputmode="numeric" min="1" max="300" value="10" required>
+        </label>
+        <label class="field">
+          <span>Reminder time</span>
+          <input name="time" type="time" value="18:00" required>
+        </label>
+      </div>
+      <label class="field">
+        <span>Day</span>
+        <select name="day" id="day-select"></select>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" class="btn danger" id="workout-delete" hidden>Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost" data-close>Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Weight entry -->
+  <dialog id="weight-dialog">
+    <form id="weight-form" method="dialog">
+      <h2>Log weight</h2>
+      <label class="field">
+        <span>Weight (kg)</span>
+        <input name="kg" type="number" inputmode="decimal" min="25" max="350" step="0.1" required>
+      </label>
+      <label class="field">
+        <span>Date</span>
+        <input name="date" type="date" required>
+      </label>
+      <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost" data-close>Cancel</button>
+        <button type="submit" class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
